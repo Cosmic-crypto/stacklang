@@ -15,6 +15,7 @@ git clone https://github.com/Cosmic-crypto/stacklang.git
 cd stacklang
 # build instructions here
 ```
+or install a binary file from the releases page, chose the appropriate, OS and system architecture
 
 ## Usage
 To run a Stacklang program, use the following command:
