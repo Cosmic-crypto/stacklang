@@ -1,5 +1,4 @@
 const std = @import("std");
-const reader = @import("reader.zig");
 const vm = @import("vm.zig");
 
 pub const ParsedLine = struct {
@@ -29,27 +28,19 @@ pub fn parseLine(line: []const u8) !?ParsedLine {
     };
 }
 
-pub fn compile() !void {
-    var general_purpose_allocator: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = general_purpose_allocator.deinit();
-
-    const gpa: std.mem.Allocator = general_purpose_allocator.allocator();
-
-    const args: [][:0]u8 = try std.process.argsAlloc(gpa);
-    defer std.process.argsFree(gpa, args);
-
-    const lines: [][]const u8 = try reader.read(args[1]);
+pub fn compile(lines: [][]const u8, gpa: std.mem.Allocator) !void {
     var compiled_program: std.ArrayList(vm.Instr) = try std.ArrayList(vm.Instr).initCapacity(gpa, 1);
 
+    // parse line by line
     for (lines) |line| {
-        const parsed = try parseLine(line);
-        const parsed_line = parsed orelse continue;
-        const cmd = parsed_line.cmd;
-        const val = parsed_line.val;
+        const parsed: ?ParsedLine = try parseLine(line);
+        const parsed_line: ParsedLine = parsed orelse continue;
+        const cmd: []const u8 = parsed_line.cmd;
+        const val: ?[]const u8 = parsed_line.val;
 
         if (std.mem.eql(u8, cmd, "Push")) {
-            const vstr = val orelse return error.InvalidSyntax;
-            const v = std.fmt.parseInt(i32, vstr, 10) catch return error.InvalidNumber;
+            const vstr: []const u8 = val orelse return error.InvalidSyntax;
+            const v: i32 = std.fmt.parseInt(i32, vstr, 10) catch return error.InvalidNumber;
             try compiled_program.append(gpa, .{ .Push = v });
         } else if (std.mem.eql(u8, cmd, "Add")) {
             try compiled_program.append(gpa, .Add);
